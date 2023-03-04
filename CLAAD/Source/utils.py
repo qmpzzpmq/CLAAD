@@ -1,25 +1,6 @@
-import os
-from typing import Any, Callable, List, Optional, Type, Union
-
-import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import scipy
-import scipy.signal as signal
-import seaborn as sns
 import torch
-import torchaudio
-from IPython.display import Audio
-from pytorch_metric_learning import losses
-from scipy.io import wavfile
-from torch import Tensor, nn
-from torch.nn import functional as F
-from torch.utils.data import ConcatDataset, DataLoader, Dataset
-
-# from Dataset.data_loader import audiodir, MIMII
-from Dataset.data_loader import MIMII, audiodir
 from Transform.AWGN import AWGN
 from Transform.fade import fade
 from Transform.freq_mask import freq_mask
@@ -29,11 +10,14 @@ from Transform.time_mask import time_mask
 from Transform.time_shift import time_shift
 from Transform.time_stretch import time_stretch
 
+# from Dataset.data_loader import audiodir, MIMII
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def transform(y, sr=16000, mel=False):
-    if mel == False:
+    if not mel:
         trans_var = np.random.randint(0, 8)
         if trans_var == 6:  # Time Stretch
             S = time_stretch(y)
@@ -63,6 +47,8 @@ def transform(y, sr=16000, mel=False):
 
         elif trans_var == 3:  # Time Masking
             S_dB = MelSpec(y, sr)
+            if S_dB.dim() == 2:
+                S_dB = S_dB.unsqueeze(0)
             S = time_mask(S_dB)
             cls = 3
             return S, cls
